@@ -1,0 +1,14 @@
+{
+  "name": "resume-contract",
+  "version": "1.0.0",
+  "description": "Smart contracts for Resume DApp",
+  "scripts": {
+    "compile": "hardhat compile",
+    "deploy": "hardhat run scripts/deploy.js --network base"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "hardhat": "^2.22.0",
+    "dotenv": "^16.0.3"
+  }
+}
