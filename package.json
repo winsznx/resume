@@ -1,12 +1,16 @@
 {
   "name": "resume-dapp",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
+  "description": "On-chain professional resume application built on Base blockchain",
+  "author": "winsznx",
+  "license": "MIT",
   "packageManager": "pnpm@10.20.0",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "lint": "next lint"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.2",
