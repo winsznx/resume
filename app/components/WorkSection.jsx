@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
 import { CONTRACT_ADDRESS, RESUME_ABI } from '../contracts/Resume'
 import { formatDistanceToNow } from 'date-fns'
+import LoadingSpinner from './LoadingSpinner'
 
 export default function WorkSection({ workExperiences, entryFee, refetch }) {
   const [showForm, setShowForm] = useState(false)
@@ -153,9 +154,13 @@ export default function WorkSection({ workExperiences, entryFee, refetch }) {
       )}
 
       {/* Display work experiences */}
-      {!workExperiences || workExperiences.length === 0 ? (
-        <div className="text-center py-12 text-gray-400">
-          <p>No work experience added yet</p>
+      {workExperiences === undefined ? (
+        <LoadingSpinner />
+      ) : workExperiences.length === 0 ? (
+        <div className="text-center py-12">
+          <div className="text-5xl mb-3">💼</div>
+          <p className="text-gray-400">No work experience added yet</p>
+          <p className="text-gray-500 text-sm mt-2">Click "+ Add Work" to get started</p>
         </div>
       ) : (
         <div className="space-y-4">
