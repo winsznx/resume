@@ -1,13 +1,60 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useAccount } from 'wagmi'
+import { useAccount, useReadContract } from 'wagmi'
 import { useWeb3Modal } from '@web3modal/wagmi/react'
+import { CONTRACT_ADDRESS, RESUME_ABI } from './contracts/Resume'
+import WorkSection from './components/WorkSection'
+import EducationSection from './components/EducationSection'
+import SkillsSection from './components/SkillsSection'
+import ProjectsSection from './components/ProjectsSection'
 
 export default function Home() {
   const [mounted, setMounted] = useState(false)
   const { address, isConnected } = useAccount()
   const { open } = useWeb3Modal()
+
+  // Read contract data
+  const { data: workExperiences, refetch: refetchWork } = useReadContract({
+    address: CONTRACT_ADDRESS,
+    abi: RESUME_ABI,
+    functionName: 'getUserWorkExperiences',
+    args: address ? [address] : undefined,
+  })
+
+  const { data: educations, refetch: refetchEducation } = useReadContract({
+    address: CONTRACT_ADDRESS,
+    abi: RESUME_ABI,
+    functionName: 'getUserEducations',
+    args: address ? [address] : undefined,
+  })
+
+  const { data: skills, refetch: refetchSkills } = useReadContract({
+    address: CONTRACT_ADDRESS,
+    abi: RESUME_ABI,
+    functionName: 'getUserSkills',
+    args: address ? [address] : undefined,
+  })
+
+  const { data: projects, refetch: refetchProjects } = useReadContract({
+    address: CONTRACT_ADDRESS,
+    abi: RESUME_ABI,
+    functionName: 'getUserProjects',
+    args: address ? [address] : undefined,
+  })
+
+  const { data: entryFee } = useReadContract({
+    address: CONTRACT_ADDRESS,
+    abi: RESUME_ABI,
+    functionName: 'entryFee',
+  })
+
+  const refetchAll = () => {
+    refetchWork()
+    refetchEducation()
+    refetchSkills()
+    refetchProjects()
+  }
 
   useEffect(() => {
     setMounted(true)
@@ -84,9 +131,27 @@ export default function Home() {
             </div>
           </div>
         ) : (
-          <div className="text-center py-24">
-            <div className="text-4xl font-bold text-white mb-4">Welcome!</div>
-            <p className="text-gray-400">Resume features will be added in the next commits...</p>
+          <div className="space-y-8">
+            <WorkSection
+              workExperiences={workExperiences}
+              entryFee={entryFee}
+              refetch={refetchAll}
+            />
+            <EducationSection
+              educations={educations}
+              entryFee={entryFee}
+              refetch={refetchAll}
+            />
+            <SkillsSection
+              skills={skills}
+              entryFee={entryFee}
+              refetch={refetchAll}
+            />
+            <ProjectsSection
+              projects={projects}
+              entryFee={entryFee}
+              refetch={refetchAll}
+            />
           </div>
         )}
       </div>
