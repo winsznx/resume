@@ -66,23 +66,23 @@ export default function Home() {
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black">
       <div className="container mx-auto max-w-6xl px-4 py-8">
         {/* Header */}
-        <header className="mb-12">
-          <div className="flex items-center justify-between bg-card border border-border rounded-lg p-6">
+        <header className="mb-8 md:mb-12">
+          <div className="flex flex-col md:flex-row md:items-center justify-between bg-card border border-border rounded-lg p-4 md:p-6 gap-4">
             <div>
-              <h1 className="text-4xl font-bold text-white mb-2">Resume DApp</h1>
-              <p className="text-gray-400">Your Professional Profile, On-Chain Forever</p>
+              <h1 className="text-3xl md:text-4xl font-bold text-white mb-1 md:mb-2">Resume DApp</h1>
+              <p className="text-gray-400 text-sm md:text-base">Your Professional Profile, On-Chain Forever</p>
             </div>
 
             {!isConnected ? (
               <button
                 onClick={() => open?.()}
-                className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+                className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors w-full md:w-auto"
               >
                 Connect Wallet
               </button>
             ) : (
-              <div className="flex flex-col items-end gap-2">
-                <div className="bg-green-900/30 border border-green-700 text-green-400 px-4 py-2 rounded-lg font-mono text-sm">
+              <div className="flex flex-col items-start md:items-end gap-2">
+                <div className="bg-green-900/30 border border-green-700 text-green-400 px-4 py-2 rounded-lg font-mono text-sm w-full md:w-auto text-center">
                   {address?.slice(0, 6)}...{address?.slice(-4)}
                 </div>
                 <button
