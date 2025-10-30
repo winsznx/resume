@@ -154,6 +154,23 @@ export default function Home() {
             />
           </div>
         )}
+
+        {/* Footer */}
+        <footer className="mt-16 text-center py-8 border-t border-border">
+          <p className="text-gray-400 text-sm mb-2">
+            Built on Base • Powered by WalletConnect
+          </p>
+          {isConnected && CONTRACT_ADDRESS !== "0x0000000000000000000000000000000000000000" && (
+            <a
+              href={`https://basescan.org/address/${CONTRACT_ADDRESS}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary-500 hover:text-primary-400 text-sm underline transition-colors"
+            >
+              View Contract on BaseScan →
+            </a>
+          )}
+        </footer>
       </div>
     </div>
   )
