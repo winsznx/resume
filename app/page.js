@@ -4,10 +4,10 @@ import { useState, useEffect } from 'react'
 import { useAccount, useReadContract } from 'wagmi'
 import { useWeb3Modal } from '@web3modal/wagmi/react'
 import { CONTRACT_ADDRESS, RESUME_ABI } from './contracts/Resume'
-import WorkSection from './components/WorkSection'
-import EducationSection from './components/EducationSection'
-import SkillsSection from './components/SkillsSection'
-import ProjectsSection from './components/ProjectsSection'
+import WorkSection from './components/WorkSection.tsx'
+import EducationSection from './components/EducationSection.tsx'
+import SkillsSection from './components/SkillsSection.tsx'
+import ProjectsSection from './components/ProjectsSection.tsx'
 
 export default function Home() {
   const [mounted, setMounted] = useState(false)
