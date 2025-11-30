@@ -70,13 +70,36 @@ contract Resume {
 
     // Events
     event WorkAdded(uint256 indexed id, address indexed owner, string company);
+    event WorkDeleted(uint256 indexed id, address indexed owner);
     event EducationAdded(uint256 indexed id, address indexed owner, string institution);
+    event EducationDeleted(uint256 indexed id, address indexed owner);
     event SkillAdded(uint256 indexed id, address indexed owner, string name);
+    event SkillDeleted(uint256 indexed id, address indexed owner);
     event ProjectAdded(uint256 indexed id, address indexed owner, string title);
+    event ProjectDeleted(uint256 indexed id, address indexed owner);
     event SkillEndorsed(uint256 indexed skillId, address indexed endorser);
+    event FeeUpdated(uint256 oldFee, uint256 newFee);
+
+    // Custom errors (more gas efficient than require strings)
+    error InsufficientFee();
+    error InvalidDate();
+    error OnlyOwner();
+    error EntryNotFound();
+    error NotEntryOwner();
+    error AlreadyEndorsed();
+    error CannotEndorseOwnSkill();
+    error InvalidGraduationYear();
+    error EmptyField(string fieldName);
 
     constructor() {
         owner = msg.sender;
+    }
+
+    // Modifiers
+    modifier onlyEntryOwner(uint256 _id, mapping(uint256 => WorkExperience) storage entries) {
+        if (!entries[_id].exists) revert EntryNotFound();
+        if (entries[_id].owner != msg.sender) revert NotEntryOwner();
+        _;
     }
 
     // Work Experience Functions
@@ -88,11 +111,16 @@ contract Resume {
         uint256 _endDate,
         bool _current
     ) public payable {
-        require(msg.value >= entryFee, "Insufficient fee");
-        require(bytes(_company).length > 0, "Company required");
-        require(bytes(_position).length > 0, "Position required");
+        if (msg.value < entryFee) revert InsufficientFee();
+        if (bytes(_company).length == 0) revert EmptyField("company");
+        if (bytes(_position).length == 0) revert EmptyField("position");
+        if (_startDate > block.timestamp) revert InvalidDate();
+        if (!_current && _endDate != 0 && _endDate < _startDate) revert InvalidDate();
 
-        uint256 id = workCounter++;
+        uint256 id;
+        unchecked {
+            id = workCounter++;
+        }
 
         workExperiences[id] = WorkExperience({
             id: id,
@@ -111,6 +139,14 @@ contract Resume {
         emit WorkAdded(id, msg.sender, _company);
     }
 
+    function deleteWorkExperience(uint256 _id) public {
+        if (!workExperiences[_id].exists) revert EntryNotFound();
+        if (workExperiences[_id].owner != msg.sender) revert NotEntryOwner();
+        
+        workExperiences[_id].exists = false;
+        emit WorkDeleted(_id, msg.sender);
+    }
+
     // Education Functions
     function addEducation(
         string memory _institution,
@@ -118,10 +154,16 @@ contract Resume {
         string memory _field,
         uint256 _graduationYear
     ) public payable {
-        require(msg.value >= entryFee, "Insufficient fee");
-        require(bytes(_institution).length > 0, "Institution required");
+        if (msg.value < entryFee) revert InsufficientFee();
+        if (bytes(_institution).length == 0) revert EmptyField("institution");
+        if (_graduationYear > 0 && (_graduationYear < 1900 || _graduationYear > block.timestamp / 365 days + 1970 + 10)) {
+            revert InvalidGraduationYear();
+        }
 
-        uint256 id = educationCounter++;
+        uint256 id;
+        unchecked {
+            id = educationCounter++;
+        }
 
         educations[id] = Education({
             id: id,
@@ -138,12 +180,23 @@ contract Resume {
         emit EducationAdded(id, msg.sender, _institution);
     }
 
+    function deleteEducation(uint256 _id) public {
+        if (!educations[_id].exists) revert EntryNotFound();
+        if (educations[_id].owner != msg.sender) revert NotEntryOwner();
+        
+        educations[_id].exists = false;
+        emit EducationDeleted(_id, msg.sender);
+    }
+
     // Skill Functions
     function addSkill(string memory _name) public payable {
-        require(msg.value >= entryFee, "Insufficient fee");
-        require(bytes(_name).length > 0, "Skill name required");
+        if (msg.value < entryFee) revert InsufficientFee();
+        if (bytes(_name).length == 0) revert EmptyField("skill name");
 
-        uint256 id = skillCounter++;
+        uint256 id;
+        unchecked {
+            id = skillCounter++;
+        }
 
         skills[id] = Skill({
             id: id,
@@ -159,13 +212,23 @@ contract Resume {
     }
 
     function endorseSkill(uint256 _skillId) public {
-        require(skills[_skillId].exists, "Skill does not exist");
-        require(!skillEndorsements[_skillId][msg.sender], "Already endorsed");
-        require(skills[_skillId].owner != msg.sender, "Cannot endorse own skill");
+        if (!skills[_skillId].exists) revert EntryNotFound();
+        if (skillEndorsements[_skillId][msg.sender]) revert AlreadyEndorsed();
+        if (skills[_skillId].owner == msg.sender) revert CannotEndorseOwnSkill();
 
-        skills[_skillId].endorsements++;
+        unchecked {
+            skills[_skillId].endorsements++;
+        }
         skillEndorsements[_skillId][msg.sender] = true;
         emit SkillEndorsed(_skillId, msg.sender);
+    }
+
+    function deleteSkill(uint256 _id) public {
+        if (!skills[_id].exists) revert EntryNotFound();
+        if (skills[_id].owner != msg.sender) revert NotEntryOwner();
+        
+        skills[_id].exists = false;
+        emit SkillDeleted(_id, msg.sender);
     }
 
     // Project Functions
@@ -174,10 +237,13 @@ contract Resume {
         string memory _description,
         string memory _link
     ) public payable {
-        require(msg.value >= entryFee, "Insufficient fee");
-        require(bytes(_title).length > 0, "Title required");
+        if (msg.value < entryFee) revert InsufficientFee();
+        if (bytes(_title).length == 0) revert EmptyField("title");
 
-        uint256 id = projectCounter++;
+        uint256 id;
+        unchecked {
+            id = projectCounter++;
+        }
 
         projects[id] = Project({
             id: id,
@@ -193,13 +259,25 @@ contract Resume {
         emit ProjectAdded(id, msg.sender, _title);
     }
 
+    function deleteProject(uint256 _id) public {
+        if (!projects[_id].exists) revert EntryNotFound();
+        if (projects[_id].owner != msg.sender) revert NotEntryOwner();
+        
+        projects[_id].exists = false;
+        emit ProjectDeleted(_id, msg.sender);
+    }
+
     // View Functions
     function getUserWorkExperiences(address _user) public view returns (WorkExperience[] memory) {
         uint256[] memory ids = userWorkIds[_user];
         uint256 activeCount = 0;
 
         for (uint256 i = 0; i < ids.length; i++) {
-            if (workExperiences[ids[i]].exists) activeCount++;
+            if (workExperiences[ids[i]].exists) {
+                unchecked {
+                    activeCount++;
+                }
+            }
         }
 
         WorkExperience[] memory result = new WorkExperience[](activeCount);
@@ -208,7 +286,9 @@ contract Resume {
         for (uint256 i = 0; i < ids.length; i++) {
             if (workExperiences[ids[i]].exists) {
                 result[index] = workExperiences[ids[i]];
-                index++;
+                unchecked {
+                    index++;
+                }
             }
         }
 
@@ -220,7 +300,11 @@ contract Resume {
         uint256 activeCount = 0;
 
         for (uint256 i = 0; i < ids.length; i++) {
-            if (educations[ids[i]].exists) activeCount++;
+            if (educations[ids[i]].exists) {
+                unchecked {
+                    activeCount++;
+                }
+            }
         }
 
         Education[] memory result = new Education[](activeCount);
@@ -229,7 +313,9 @@ contract Resume {
         for (uint256 i = 0; i < ids.length; i++) {
             if (educations[ids[i]].exists) {
                 result[index] = educations[ids[i]];
-                index++;
+                unchecked {
+                    index++;
+                }
             }
         }
 
@@ -241,7 +327,11 @@ contract Resume {
         uint256 activeCount = 0;
 
         for (uint256 i = 0; i < ids.length; i++) {
-            if (skills[ids[i]].exists) activeCount++;
+            if (skills[ids[i]].exists) {
+                unchecked {
+                    activeCount++;
+                }
+            }
         }
 
         Skill[] memory result = new Skill[](activeCount);
@@ -250,7 +340,9 @@ contract Resume {
         for (uint256 i = 0; i < ids.length; i++) {
             if (skills[ids[i]].exists) {
                 result[index] = skills[ids[i]];
-                index++;
+                unchecked {
+                    index++;
+                }
             }
         }
 
@@ -262,7 +354,11 @@ contract Resume {
         uint256 activeCount = 0;
 
         for (uint256 i = 0; i < ids.length; i++) {
-            if (projects[ids[i]].exists) activeCount++;
+            if (projects[ids[i]].exists) {
+                unchecked {
+                    activeCount++;
+                }
+            }
         }
 
         Project[] memory result = new Project[](activeCount);
@@ -271,7 +367,9 @@ contract Resume {
         for (uint256 i = 0; i < ids.length; i++) {
             if (projects[ids[i]].exists) {
                 result[index] = projects[ids[i]];
-                index++;
+                unchecked {
+                    index++;
+                }
             }
         }
 
@@ -280,13 +378,16 @@ contract Resume {
 
     // Owner Functions
     function updateFee(uint256 _newFee) public {
-        require(msg.sender == owner, "Only owner");
+        if (msg.sender != owner) revert OnlyOwner();
+        uint256 oldFee = entryFee;
         entryFee = _newFee;
+        emit FeeUpdated(oldFee, _newFee);
     }
 
     function withdraw() public {
-        require(msg.sender == owner, "Only owner");
-        payable(owner).transfer(address(this).balance);
+        if (msg.sender != owner) revert OnlyOwner();
+        (bool success, ) = payable(owner).call{value: address(this).balance}("");
+        require(success, "Transfer failed");
     }
 
     function getBalance() public view returns (uint256) {
